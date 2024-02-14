@@ -2,7 +2,7 @@ const express = require("express");
 const logger = require("morgan");
 const cors = require("cors");
 const db = require("./app/models");
-
+const userRouter = require("./app/routes/user.routes")
 
 // ________________________________________________________________________________________________
 
@@ -42,7 +42,9 @@ db.mongoose.connect(db.url).then(() => {
 // test link 
 app.get('/test', (req, res) => {
     res.send({ data: 'test from server!!!!' });
-})
+});
+
+app.use("/api/v1/user", userRouter);
 
 // ________________________________________________________________________________________________
 
