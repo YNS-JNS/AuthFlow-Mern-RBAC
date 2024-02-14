@@ -1,0 +1,19 @@
+{
+  "name": "todo-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/YNS-JNS/ToDo-List-Pro.git",
+  "author": "yns-jns <younessaitmbarek97@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "start": "concurrently \"yarn workspace server start\" \"yarn workspace client dev\" "
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
