@@ -32,6 +32,14 @@ const UserSchema = new Schema(
             minlength: [8, 'Password is too short!'],
             // maxlength: [28, 'Password is too long!'],
         },
+        // One-To-Many data modeling:
+        roles: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: 'RoleModel',
+                required: [true, 'Role is required!'],
+            }
+        ]
     },
     {
         timestamps: true
