@@ -20,24 +20,30 @@ const UserSchema = new Schema(
         },
         email: {
             type: String,
-            required: [true, 'Email is required!'],
+            required: [true, 'Email not provided!'],
             trim: true,
             minlength: [2, 'Email is too short!'],
-            maxlength: [50, 'Email is too long!'],
+            // maxlength: [80, 'Email is too long!'],
+            unique: [true, "Email already exists!"],
+            validate: {
+                validator: function (v) {
+                    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+                },
+                message: '{VALUE} is not a valid email!'
+            }
         },
         password: {
             type: String,
             required: [true, 'Password is required!'],
             trim: true,
             minlength: [8, 'Password is too short!'],
-            // maxlength: [28, 'Password is too long!'],
         },
         // One-To-Many data modeling:
         roles: [
             {
                 type: Schema.Types.ObjectId,
                 ref: 'RoleModel',
-                required: [true, 'Role is required!'],
+                required: [true, 'Please specify user role'],
             }
         ]
     },
