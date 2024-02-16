@@ -65,6 +65,7 @@ export const authJwt = {
         };
     */
 
+    // using exec()
     isAdmin: (req, res, next) => {
 
         UserModel.findById(req.userId)
@@ -75,7 +76,7 @@ export const authJwt = {
                     }
 
                     // Check user role
-                    RoleModel.find({ id: { $in: req.user.roles } })
+                    RoleModel.find({ id: { $in: user.roles } })
                         .exec(
                             (err, roles) => {
                                 if (err) {
@@ -96,6 +97,33 @@ export const authJwt = {
                         );
                 }
             );
+
+        next();
+    },
+
+    // using then() catch()
+    isModerator: (req, res, next) => {
+
+        UserModel.findById(req.userId)
+            .then(
+                (user) => {
+
+                    // Checking role
+                    RoleModel.find({ id: { $in: user.roles } })
+                        .then(
+                            (roles) => {
+                                for (let i = 0; i < roles.length; i++) {
+                                    if (roles[i].role === "moderator") {
+                                        next();
+                                        return;
+                                    }
+                                }
+                            }
+                        )
+                        .catch(err => res.status().json({ message: "Require Moderator Role!" || err.message }));
+                }
+            )
+            .catch(err => res.status().json({ message: err.message }));
 
         next();
     }
