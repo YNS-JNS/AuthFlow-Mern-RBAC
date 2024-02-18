@@ -3,7 +3,7 @@ const db = require("../../models")
 const UserModel = db.user;
 const RoleModel = db.role;
 
-export const authJwt = {
+exports.authJwt = {
 
     // jwtAccessAuthCheck
     verifyToken: (req, res, next) => {
@@ -65,9 +65,9 @@ export const authJwt = {
         };
     */
 
-    // using exec()
     isAdmin: (req, res, next) => {
 
+        // using exec()
         UserModel.findById(req.userId)
             .exec(
                 (err, user) => {
@@ -98,12 +98,11 @@ export const authJwt = {
                 }
             );
 
-        next();
     },
 
-    // using then() catch()
     isModerator: (req, res, next) => {
 
+        // using then() catch()
         UserModel.findById(req.userId)
             .then(
                 (user) => {
@@ -113,8 +112,10 @@ export const authJwt = {
                         .then(
                             (roles) => {
                                 for (let i = 0; i < roles.length; i++) {
+
+                                    // If user has moderator role, allow the request and move to the next middleware
                                     if (roles[i].role === "moderator") {
-                                        next();
+                                        next(); // Move to the next middleware
                                         return;
                                     }
                                 }
@@ -125,6 +126,23 @@ export const authJwt = {
             )
             .catch(err => res.status().json({ message: err.message }));
 
-        next();
     }
 };
+
+/**
+ * @desc $in:
+ * The $in operator selects the documents where the value of a field equals any value in the specified array.
+ * Syntax:
+ * To specify an $in expression, use the following prototype:
+ * { field: { $in: [<value1>, <value2>, ... <valueN> ] } }
+ * If the field holds an array, then the $in operator selects the documents whose field holds an array that contains 
+ * at least one element that matches a value in the specified array (for example, <value1>, <value2>, and so on).
+ * 
+ * Example:
+ * Let's say we have a collection of books with a "genre" field. We want to find all books that belong to either the "fiction" or "mystery" genre.
+ * Here's how we can use the $in operator:
+ * db.books.find({ genre: { $in: ["fiction", "mystery"] } })
+ * This query will return all documents where the "genre" field is either "fiction" or "mystery".
+ * 
+ * For more details, see the documentation @URL : https://www.mongodb.com/docs/manual/reference/operator/query/in/
+ */
