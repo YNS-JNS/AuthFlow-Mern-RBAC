@@ -16,16 +16,6 @@ const jwt = require("jsonwebtoken");
 */
 
 /**
-     * TODO: Generate a JSON Web Token (JWT) for authentication.
-     * @function
-     * @param {Object} payload - Payload to be included in the token.
-     * @returns {string} - The generated JWT.
-*/
-const generateToken = (payload) => {
-    return jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: '1d' });
-};
-
-/**
  * TODO: Controller methods for user authentication.
  * @namespace auth
 */
@@ -64,9 +54,17 @@ exports.authController = {
                 if (!getDefaultRole) {
                     return res.status(404).json({ message: "Failed! getting role by default!" })
                 }
+
                 roleId = getDefaultRole.id;
+
             } else {
-                roleId = role;
+                const roleSelected = await RoleModel.findOne({ name: role }).exec();
+
+                if (!roleSelected) {
+                    return res.status(404).json({ message: `Failed! Role ${roleSelected} does not exist!` })
+                }
+
+                roleId = roleSelected.id;
             }
 
             // Create new user
@@ -90,9 +88,10 @@ exports.authController = {
 
             // Send response
             res.status(201).json({
+                status: 201,
                 message: "User created successfully.",
-                data: savedUser,
-                token: token
+                InfoUser: savedUser,
+                accessToken: token
             });
 
         } catch (error) {
@@ -110,81 +109,84 @@ exports.authController = {
            * @param {Object} res - Express response object.
            * @returns {Promise<void>} - A Promise that resolves after processing.
     */
-    signIn: (req, res) => {
+    signIn: async (req, res) => {
 
         const { email, password } = req.body;
 
-        // validation
-        if (!email || !password) {
-            res.status(400).json({
-                status: 400,
-                message: 'Please provide all fields!'
-            })
-            return;
-        }
+        try {
 
-        UserModel.findOne({ email }).populate("role", "name -_id")
-            .then(
-                (user) => {
+            // validation
+            if (!email || !password) {
+                res.status(400).json({
+                    status: 400,
+                    message: 'Please provide all fields!'
+                })
+                return;
+            }
 
-                    // If the user is not existing 
-                    if (!user) {
-                        res.status(404).json({
-                            status: 404,
-                            message: 'User not found!'
-                        })
-                        return;
-                    }
+            const user = await UserModel.findOne({ email }).populate("role", "name -_id").exec();
 
-                    // Check if the user's password is correct
-                    const isPasswordValid = bcrypt.compareSync(password, user.password);
+            // if user not found
+            if (!user) {
+                res.status(401).json({
+                    status: 401,
+                    message: 'Unauthorized!'
+                })
+                return;
+            }
 
-                    // if not
-                    if (!isPasswordValid) {
-                        res.status(401).json({
-                            status: 401,
-                            message: 'Email or password is invalid!'
-                        })
-                        return;
-                    }
+            // Check if the user's password is correct
+            const isPasswordValid = bcrypt.compareSync(password, user.password);
 
-                    // if correct, create a new token
-                    // generate token
-                    const token = generateToken({
-                        id: user.id,
-                        firstName: user.firstName,
-                        lastName: user.lastName,
-                        role: user.role
-                    });
+            if (!isPasswordValid) {
+                res.status(401).json({
+                    status: 401,
+                    message: 'Email or password is invalid!' // "Unauthorized!"
+                })
+                return;
+            }
 
-                    var authorities = "";
+            // generate token
+            const token = generateToken({
+                sub: user.id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role
+            });
 
-                    // authorities.push("ROLE_" + user.role.name.toUpperCase());
-                    authorities = "ROLE_" + user.role.name.toUpperCase();
+            var authorities = "";
 
-                    res.status(200).json(
-                        {
-                            status: 200,
-                            message: 'User authenticated successfully!',
-                            id: user.id,
-                            firstName: user.firstName,
-                            lastName: user.lastName,
-                            email: user.email,
-                            role: authorities,
-                            accessToken: token
-                        }
-                    )
+            authorities = "ROLE_" + user.role.name.toUpperCase();
 
-                }
-            )
-            .catch(
-                (err) => {
-                    res.status(500).json({
-                        status: 500,
-                        message: "Error checking user existence.",
-                        error: err.message
-                    })
+            res.status(200).json(
+                {
+                    status: 200,
+                    message: 'User authenticated successfully!',
+                    id: user.id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email,
+                    role: authorities,
+                    accessToken: token
                 }
             );
+
+        } catch (error) {
+            res.status(500).json({
+                status: 500,
+                message: "Error logging user!",
+                error: err.message
+            })
+        }
     },
+};
+
+/**
+     * TODO: Generate a JSON Web Token (JWT) for authentication.
+     * @function
+     * @param {Object} payload - Payload to be included in the token.
+     * @returns {string} - The generated JWT.
+*/
+const generateToken = (payload) => {
+    return jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: '1d' });
 };

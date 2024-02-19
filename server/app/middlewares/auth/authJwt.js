@@ -8,31 +8,35 @@ exports.authJwt = {
     // jwtAccessAuthCheck
     verifyToken: (req, res, next) => {
 
-        // Extract the token from the Authorization header
-        const token = req.headers?.authorization?.split(" ")[1];
+        try {
+            // Extract the token from the Authorization header
+            const token = req.headers?.authorization?.split(" ")[1];
 
-        if (!token) {
-            // 403: forbidden
-            return res.status(403).json({ message: "No token provided!" });
-        }
-
-        // Verify the token asynchronously
-        jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
-            // err
-            if (err) {
-                return res.status(401).json({ message: "Unauthorized!" });
+            if (!token) {
+                // 403: forbidden
+                return res.status(403).json({ message: "No token provided!" });
             }
 
-            // decoded undefined
-            // Attach the user information or id from the token to the request object
-            req.userId = decoded.id;
-            // req.userId = decoded;
-        });
+            // Verify the token asynchronously
+            jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+                // err
+                if (err) {
+                    return res.status(401).json({ message: "Unauthorized!" });
+                }
 
-        // Log the user information or id
-        console.log("User information or id:", req.userId);
+                // decoded undefined
+                // Attach the user information or id from the token to the request object
+                req.userId = decoded.sub;
+                // req.userId = decoded;
+                console.log("Sub id: ", req.userId);
+            });
 
-        next();
+            // console.log("User information or id:", req.userId);
+
+            next();
+        } catch (error) {
+            console.log("Error:", error);
+        }
 
     },
     /*
@@ -65,67 +69,60 @@ exports.authJwt = {
         };
     */
 
-    isAdmin: (req, res, next) => {
+    isAdmin: async (req, res, next) => {
+        try {
+            const user = await UserModel.findById(req.userId).exec();
 
-        // using exec()
-        UserModel.findById(req.userId)
-            .exec(
-                (err, user) => {
-                    if (err) {
-                        return res.status(500).json({ error: err.message });
-                    }
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
 
-                    // Check user role
-                    RoleModel.find({ id: { $in: user.roles } })
-                        .exec(
-                            (err, roles) => {
-                                if (err) {
-                                    return res.status(500).json({ error: err.message });
-                                }
+            console.log("isAdmin: " + user);
 
-                                // Loop through roles for searching for admin role
-                                for (let i = 0; i < roles.length; i++) {
+            const roleUser = await RoleModel.findOne({ _id: user.role }).exec();
 
-                                    if (roles[i].name === 'admin') {
-                                        next();
-                                        return;
-                                    }
-                                }
+            if (!roleUser) {
+                return res.status(404).json({ error: "Role not found" });
+            }
 
-                                return res.status(401).json({ message: "Require Admin Role!" });
-                            }
-                        );
-                }
-            );
+            console.log("Role: " + roleUser);
 
+            if (roleUser.name === 'admin') {
+                next();
+            } else {
+                return res.status(403).json({ error: "You are not authorized to access this resource" });
+            }
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
     },
 
-    isModerator: (req, res, next) => {
+    isModerator: async (req, res, next) => {
+        try {
+            const user = await UserModel.findById(req.userId).exec();
 
-        // using then() catch()
-        UserModel.findById(req.userId)
-            .then(
-                (user) => {
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
 
-                    // Checking role
-                    RoleModel.find({ id: { $in: user.roles } })
-                        .then(
-                            (roles) => {
-                                for (let i = 0; i < roles.length; i++) {
+            console.log("isAdmin: " + user);
 
-                                    // If user has moderator role, allow the request and move to the next middleware
-                                    if (roles[i].role === "moderator") {
-                                        next(); // Move to the next middleware
-                                        return;
-                                    }
-                                }
-                            }
-                        )
-                        .catch(err => res.status().json({ message: "Require Moderator Role!" || err.message }));
-                }
-            )
-            .catch(err => res.status().json({ message: err.message }));
+            const roleUser = await RoleModel.findOne({ _id: user.role }).exec();
 
+            if (!roleUser) {
+                return res.status(404).json({ error: "Role not found" });
+            }
+
+            console.log("Role: " + roleUser);
+
+            if (roleUser.name === 'moderator') {
+                next();
+            } else {
+                return res.status(403).json({ error: "You are not authorized to access this resource" });
+            }
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
     }
 };
 

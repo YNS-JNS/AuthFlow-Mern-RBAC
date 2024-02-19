@@ -1,5 +1,4 @@
 const { authController } = require('../controllers/auth.controller');
-// const { authJwt, verifySignUp } = require("../middlewares/auth")
 const { verifySignUp } = require('../middlewares/auth/verifySignUp')
 const express = require('express');
 const router = express.Router();
@@ -7,7 +6,7 @@ const router = express.Router();
 /** 
  * @des Sign Up:
  */
-router.post('/sign-up', verifySignUp.checkDuplicateEmail, authController.signUp);
+router.post('/sign-up', [verifySignUp.checkDuplicateEmail, verifySignUp.checkRolesExisted], authController.signUp);
 
 /** 
  * @des Sign In:
