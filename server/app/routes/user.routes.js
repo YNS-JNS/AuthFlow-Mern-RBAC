@@ -1,8 +1,16 @@
-const { auth } = require('../controllers/user.controller');
+const { authController } = require('../controllers/auth.controller');
+const { verifySignUp } = require('../middlewares/auth/verifySignUp')
 const express = require('express');
 const router = express.Router();
 
-router.post('/sign-up', auth.signUp);
-router.post('/sign-in', auth.signIn);
+/** 
+ * @des Sign Up:
+ */
+router.post('/sign-up', [verifySignUp.checkDuplicateEmail, verifySignUp.checkRolesExisted], authController.signUp);
+
+/** 
+ * @des Sign In:
+ */
+router.post('/sign-in', authController.signIn);
 
 module.exports = router;

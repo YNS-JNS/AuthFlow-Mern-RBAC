@@ -24,13 +24,13 @@ const UserSchema = new Schema(
             trim: true,
             minlength: [2, 'Email is too short!'],
             // maxlength: [80, 'Email is too long!'],
-            unique: [true, "Email already exists!"],
-            validate: {
-                validator: function (v) {
-                    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-                },
-                message: '{VALUE} is not a valid email!'
-            }
+            // unique: [true, "Email already exists!"],
+            // validate: {
+            //     validator: function (v) {
+            //         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+            //     },
+            //     message: '{VALUE} is not a valid email!'
+            // }
         },
         password: {
             type: String,
@@ -38,14 +38,12 @@ const UserSchema = new Schema(
             trim: true,
             minlength: [8, 'Password is too short!'],
         },
-        // One-To-Many data modeling:
-        roles: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: 'RoleModel',
-                required: [true, 'Please specify user role'],
-            }
-        ]
+        // One-To-One data modeling:
+        role: {
+            type: Schema.Types.ObjectId,
+            ref: 'RoleModel',
+            required: [true, 'Please specify user role'],
+        },
     },
     {
         timestamps: true
