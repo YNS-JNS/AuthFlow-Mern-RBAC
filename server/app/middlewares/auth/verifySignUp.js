@@ -1,6 +1,6 @@
 const db = require('../../models');
 const UserModel = db.user;
-const ROLES = db.role;
+const ROLES = db.ROLES;
 
 /**
  * @NB exec() function in mongoose
@@ -13,88 +13,39 @@ const ROLES = db.role;
     – check if roles in the request is legal or not 'checkRolesExisted'
 */
 
-export const verifySignUp = {
+exports.verifySignUp = {
 
-    checkDuplicateUsernameOrEmail: (req, res, next) => {
+    checkDuplicateEmail: async (req, res, next) => {
 
-        // TODO: check if firstName and email are already exists in database
-        // check firstName:
-        UserModel.findOne({ firstName: req.body.firstName })
-            .exec((err, user) => {
-                if (err) {
-                    res.status(500).json({ error: err });
-                    return;
-                }
+        try {
+            // check email:
+            const existsUser = await UserModel.findOne({ email: req.body.email }).exec();
 
-                if (user) {
-                    res.status(400).json({ message: "Failed! Username is already in use!" })
-                    return;
-                }
+            if (existsUser) {
+                res.status(409).json({ message: "Failed! Email is already in use!", email: existsUser.email })
+                return;
+            }
 
-            });
+            next();
+        } catch (error) {
+            res.status(500).json({ message: "Error checking email!", error: error.message });
+        }
 
-        // check email:
-        UserModel.findOne({ email: req.body.email })
-            .exec((err, user) => {
-                if (err) {
-                    res.status(500).json({ error: err });
-                    return;
-                }
-
-                if (user) {
-                    res.status(400).json({ message: "Failed! Email is already in use!" })
-                    return;
-                }
-            });
-
-        next();
     },
 
     checkRolesExisted: (req, res, next) => {
 
-        const { roles } = req.body;
-        // check if the user role exists in the database
-        if (roles) {
+        // check if the user role exists in the database (among : [user, admin, moderator])
+        if (req.body.role) {
 
-            for (let i = 0; i < roles.length; i++) {
+            if (!ROLES.includes(req.body.role)) {
 
-                if (!ROLES.includes(roles[i])) {
-
-                    res.status(400).json({ message: `Failed! Role ${roles[i]} does not exist!` })
-                    return;
-                }
+                res.status(400).json({ message: `Failed! Role ${req.body.role} does not exist!` })
+                return;
             }
+
         }
 
         next();
     }
 };
-
-/*
-we can use then() and catch() instead of using exec():
-const verifySignUp = {
-    checkDuplicateUsernameOrEmail: (req, res, next) => {
-        Check if firstName and email are already exists in database
-        Check firstName:
-        UserModel.findOne({ firstName: req.body.firstName })
-            .then((user) => {
-                if (user) {
-                    res.status(400).json({ message: "Failed! Username is already in use!" });
-                    return;
-                }
-                Check email:
-                return UserModel.findOne({ email: req.body.email });
-            })
-            .then((user) => {
-                if (user) {
-                    res.status(400).json({ message: "Failed! Email is already in use!" });
-                    return;
-                }
-                next();
-            })
-            .catch((err) => {
-                res.status(500).json({ error: err });
-            });
-    }
-};
-*/

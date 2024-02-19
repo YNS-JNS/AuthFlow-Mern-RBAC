@@ -3,6 +3,7 @@ const logger = require("morgan");
 const cors = require("cors");
 const db = require("./app/models");
 const userRouter = require("./app/routes/user.routes")
+const testRouter = require("./app/routes/test.routes")
 
 // ________________________________________________________________________________________________
 
@@ -45,7 +46,8 @@ app.get('/test', (req, res) => {
     res.send({ data: 'test from server!!!!' });
 });
 
-app.use("/api/v1/user", userRouter);
+app.use("/api/user/auth", userRouter);
+app.use("/api/user/test", testRouter);
 
 // ________________________________________________________________________________________________
 
