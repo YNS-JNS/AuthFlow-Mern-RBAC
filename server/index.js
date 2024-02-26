@@ -4,6 +4,7 @@ const cors = require("cors");
 const db = require("./app/models");
 const userRouter = require("./app/routes/user.routes")
 const testRouter = require("./app/routes/test.routes")
+const postRouter = require("./app/routes/post.routes")
 
 // ________________________________________________________________________________________________
 
@@ -48,6 +49,7 @@ app.get('/test', (req, res) => {
 
 app.use("/api/user/auth", userRouter);
 app.use("/api/user/test", testRouter);
+app.use("/api/posts", postRouter);
 
 // ________________________________________________________________________________________________
 
