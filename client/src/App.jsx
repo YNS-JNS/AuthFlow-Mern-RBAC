@@ -1,26 +1,55 @@
-import { useEffect } from "react";
+import React from 'react'
+import Navbar from './components/Navbar'
+import { Routes, Route } from 'react-router-dom'
+import Home from './pages/Home'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Profile from './pages/Profile'
+import Dashboard from './pages/Dashboard'
+import SignOut from './pages/SignOut'
+import PrivateRoute from './components/PrivateRoute'
+import Blog from './pages/Blog'
+// import Footer from './components/Footer'
 
 const App = () => {
 
-  useEffect(() => {
-
-    fetch("http://localhost:8000/test")
-      .then((response) => {
-        return response.json(); // Return the parsed JSON data
-      })
-      .then((data) => {
-        console.log(data);
-      })
-      .catch(() => console.log("Failed to fetch"));
-
-  }, [])
+  // const token = !!localStorage.getItem('token');
 
 
   return (
-    <div className="bg-slate-700 font-display">
-      <h1>Hello</h1>
-    </div>
+    <>
+      <Navbar />
+      <Routes>
+        <Route element={<PrivateRoute />}>
+          <Route path='/dashboard' element={<Dashboard />} />
+          <Route path='/profile' element={<Profile />} />
+          <Route path='/sign-out' element={<SignOut />} />
+        </Route>
+        <Route path='/' element={<Home />} />
+        <Route path='/login' element={<Login />} />
+        <Route path='/sign-up' element={<Register />} />
+        <Route path='/blog' element={<Blog />} />
+      </Routes>
+      {/* <Footer /> */}
+    </>
   )
 }
 
-export default App;
+export default App
+
+// {
+//   token ? (
+//     <>
+//       <Route path='/dashboard' element={<Dashboard />} />
+//       <Route path='/profile' element={<Profile />} />
+//       <Route path='/sign-out' element={<SignOut />} />
+//     </>
+//   ) :
+//     (
+//       <>
+//         <Route path='/' element={<Home />} />
+//         <Route path='/login' element={<Login />} />
+//         <Route path='/sign-up' element={<Register />} />
+//       </>
+//     )
+// }
