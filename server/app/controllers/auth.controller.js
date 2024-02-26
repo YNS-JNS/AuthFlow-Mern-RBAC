@@ -49,15 +49,19 @@ exports.authController = {
 
             // checking role existing
             if (!role) {
+
+                // * if the role is empty, assign the role by default `user`
                 const getDefaultRole = await RoleModel.findOne({ name: "user" }).exec();
 
                 if (!getDefaultRole) {
                     return res.status(404).json({ message: "Failed! getting role by default!" })
                 }
 
+                // * assign role ID
                 roleId = getDefaultRole.id;
 
             } else {
+                // * take role selected
                 const roleSelected = await RoleModel.findOne({ name: role }).exec();
 
                 if (!roleSelected) {
@@ -72,30 +76,40 @@ exports.authController = {
                 firstName,
                 lastName,
                 email,
-                password: bcrypt.hashSync(password, 8),
-                role: roleId
+                password: bcrypt.hashSync(password, 8), // crypt password
+                role: roleId // assign role ID to user created
             });
 
+            // let savedUser = await newUser.save().exec();
             let savedUser = await newUser.save();
 
+            if (!savedUser) {
+                return res.status(400).json({ message: "Failed! User not created!" })
+            }
+
             // Generate token
-            const token = generateToken({
-                sub: savedUser.id,
-                firstName: savedUser.firstName,
-                lastName: savedUser.lastName,
-                role: savedUser.role
+            const accessToken = generateToken({
+                userInfo: {
+                    sub: savedUser.id,
+                    firstName: savedUser.firstName,
+                    lastName: savedUser.lastName,
+                    email: savedUser.email,
+                    role: savedUser.role
+                }
             });
 
             // Send response
             res.status(201).json({
                 status: 201,
                 message: "User created successfully.",
-                InfoUser: savedUser,
-                accessToken: token
+                user: savedUser, // for dev
+                role: savedUser.role, // for dev
+                accessToken
             });
 
         } catch (error) {
-            res.status(500).json({ message: "Error creating user!", error: error.message });
+            // res.status(500).json({ message: "Error creating user!", err: error.message });
+            res.status(500).json({ message: error.message });
         }
 
     },
@@ -130,7 +144,7 @@ exports.authController = {
             if (!user) {
                 res.status(401).json({
                     status: 401,
-                    message: 'Unauthorized!'
+                    message: 'Email or password is invalid!!'
                 })
                 return;
             }
@@ -147,11 +161,14 @@ exports.authController = {
             }
 
             // generate token
-            const token = generateToken({
-                sub: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                role: user.role
+            const accessToken = generateToken({
+                userInfo: {
+                    sub: user.id,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email,
+                    role: user.role
+                }
             });
 
             var authorities = "";
@@ -162,12 +179,9 @@ exports.authController = {
                 {
                     status: 200,
                     message: 'User authenticated successfully!',
-                    id: user.id,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    email: user.email,
+                    user,
                     role: authorities,
-                    accessToken: token
+                    accessToken
                 }
             );
 

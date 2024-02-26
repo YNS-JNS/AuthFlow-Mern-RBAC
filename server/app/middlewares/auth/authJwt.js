@@ -26,7 +26,8 @@ exports.authJwt = {
 
                 // decoded undefined
                 // Attach the user information or id from the token to the request object
-                req.userId = decoded.sub;
+                req.userId = decoded.userInfo.sub;
+                req.role = decoded.userInfo.role;
                 // req.userId = decoded;
                 console.log("Sub id: ", req.userId);
             });
@@ -123,6 +124,34 @@ exports.authJwt = {
         } catch (error) {
             return res.status(500).json({ error: error.message });
         }
+    },
+
+    isAdminOrIsModerator: async (req, res, next) => {
+        try {
+            const user = await UserModel.findById(req.userId).exec();
+
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+
+            const roleUser = await RoleModel.findOne({ _id: user.role }).exec();
+
+            if (!roleUser) {
+                return res.status(404).json({ error: "Role not found" });
+            }
+
+            console.log("Role: " + roleUser);
+
+            if (roleUser.name === 'admin' || roleUser.name === 'moderator') {
+                next();
+            } else {
+                return res.status(403).json({ error: "You are not authorized to access this resource" });
+            }
+
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+
     }
 };
 
