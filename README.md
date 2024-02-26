@@ -1,4 +1,3 @@
-Certainly! Below is a template for your README.md file outlining the project structure, features, and instructions for setting up and running the project:
 
 ---
 
